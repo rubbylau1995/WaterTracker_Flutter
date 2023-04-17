@@ -1,0 +1,38 @@
+Joe: if this app deploy to my phone, is the data will be stored in my local phone? and every time I restart the app, the data still exist?
+
+Yes, if you deploy the app to your phone, the data will be stored in the local storage of your phone. Specifically, if you use the `SharedPreferences` API to store data, the data will be stored in a file on your phone's internal storage, which is private to your app.
+
+And yes, the data will persist even if you restart the app or even if you reboot your phone. That's because the data is stored on the local storage of your phone, which is designed to persist data even if the app or the phone is restarted.
+
+However, it's worth noting that if you uninstall the app, the data will be deleted along with the app. Also, if you clear the app's data from the phone's settings, the data will be deleted as well.
+
+I hope this answers your question! Let me know if you have any other questions.
+
+Joe: 
+The error message you're seeing suggests that the `shared_preferences` package is not installed in your Flutter project, or it's not properly imported in the file where you're using it.
+
+To fix this error, you can follow these steps:
+
+1. Open your Flutter project in your code editor.
+2. In the `pubspec.yaml` file, make sure that the `shared_preferences` package is listed as a dependency. If it's not listed, add it to the `dependencies` section like this:
+
+```yaml
+dependencies:
+  flutter:
+    sdk: flutter
+  shared_preferences: ^2.0.8 # add this line
+```
+
+Make sure to replace `^2.0.8` with the latest version of the `shared_preferences` package.
+
+3. Save the `pubspec.yaml` file, and then run `flutter pub get` in your terminal or VS Code terminal to install the package.
+
+4. In the file where you're using `shared_preferences`, make sure to import it at the top of the file like this:
+
+```dart
+import 'package:shared_preferences/shared_preferences.dart';
+```
+
+5. Save the file, and then try running your app again.
+
+I hope this helps! Let me know if you have any other questions.
