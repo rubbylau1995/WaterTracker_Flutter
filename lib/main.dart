@@ -47,7 +47,7 @@ class _WaterConsumptionTrackerState extends State<WaterConsumptionTracker> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble('waterConsumed', _newWaterConsumed);
     setState(() {
-      _waterConsumed = _newWaterConsumed;
+      _waterConsumed = _newWaterConsumed + _waterConsumed;
     });
     _showSnackbar('Water consumption saved.');
   }
