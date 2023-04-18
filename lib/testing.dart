@@ -1,6 +1,5 @@
 
 import 'package:flutter/material.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(MyApp());
@@ -25,47 +24,21 @@ class WaterConsumptionTracker extends StatefulWidget {
 }
 
 class _WaterConsumptionTrackerState extends State<WaterConsumptionTracker> {
+  int _numTaps = 0;
   double _waterConsumed = 0;
 
-  void _incrementWaterConsumption() {
+  void _onTap() {
     setState(() {
-      _waterConsumed += 0.25;
-      _saveWaterConsumption();
+      _numTaps++;
+      _waterConsumed = _numTaps * 0.5;
     });
   }
 
-  void _resetWaterConsumption() {
+  void _reset() {
     setState(() {
+      _numTaps = 0;
       _waterConsumed = 0;
-      _saveWaterConsumption();
     });
-  }
-
-  void _saveWaterConsumption() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble('waterConsumed', _waterConsumed);
-  }
-
-  void _loadWaterConsumption() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _waterConsumed = prefs.getDouble('waterConsumed') ?? 0;
-    });
-  }
-
-  void _showSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: Duration(seconds: 1),
-      ),
-    );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _loadWaterConsumption();
   }
 
   @override
@@ -106,33 +79,30 @@ class _WaterConsumptionTrackerState extends State<WaterConsumptionTracker> {
             SizedBox(height: 20),
             Text(
               '${_waterConsumed.toStringAsFixed(1)} cups',
-              style: TextStyle(fontSize: 40),
+              style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: _incrementWaterConsumption,
-                  child: Text('Add 0.25 cups'),
+            GestureDetector(
+              onTap: _onTap,
+              child: Container(
+                width: 150,
+                height: 150,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.blue,
                 ),
-                SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: _resetWaterConsumption,
-                  child: Text('Reset'),
+                child: Center(
+                  child: Text(
+                    '+',
+                    style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold),
+                  ),
                 ),
-              ],
+              ),
             ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: BottomAppBar(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            IconButton(
-              icon: Icon(Icons.info_outline),
-              onPressed: () => _showSnackbar('This app was created by Sage.'),
+            SizedBox(height: 20),
+            RaisedButton(
+              onPressed: _reset,
+              child: Text('Reset'),
             ),
           ],
         ),

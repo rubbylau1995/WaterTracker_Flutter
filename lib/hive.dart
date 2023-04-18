@@ -1,8 +1,14 @@
 
 import 'package:flutter/material.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive/hive.dart';
+import 'package:path_provider/path_provider.dart' as path_provider;
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final appDocumentDir =
+      await path_provider.getApplicationDocumentsDirectory();
+  Hive.init(appDocumentDir.path);
+  await Hive.openBox<double>('waterBox');
   runApp(MyApp());
 }
 
@@ -21,51 +27,41 @@ class MyApp extends StatelessWidget {
 
 class WaterConsumptionTracker extends StatefulWidget {
   @override
-  _WaterConsumptionTrackerState createState() => _WaterConsumptionTrackerState();
+  _WaterConsumptionTrackerState createState() =>
+      _WaterConsumptionTrackerState();
 }
 
 class _WaterConsumptionTrackerState extends State<WaterConsumptionTracker> {
+  int _numTaps = 0;
   double _waterConsumed = 0;
 
-  void _incrementWaterConsumption() {
-    setState(() {
-      _waterConsumed += 0.25;
-      _saveWaterConsumption();
-    });
-  }
-
-  void _resetWaterConsumption() {
-    setState(() {
-      _waterConsumed = 0;
-      _saveWaterConsumption();
-    });
-  }
-
-  void _saveWaterConsumption() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble('waterConsumed', _waterConsumed);
-  }
-
-  void _loadWaterConsumption() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _waterConsumed = prefs.getDouble('waterConsumed') ?? 0;
-    });
-  }
-
-  void _showSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: Duration(seconds: 1),
-      ),
-    );
-  }
+  late Box<double> waterBox; // will init later
 
   @override
   void initState() {
     super.initState();
-    _loadWaterConsumption();
+    waterBox = Hive.box<double>('waterBox');
+    _waterConsumed = waterBox.get('water',) ?? 0;
+  }
+
+  void _onTap() {
+    setState(() {
+      _numTaps++;
+      _waterConsumed = _numTaps * 0.5;
+    });
+    waterBox.put('water', _waterConsumed);
+  }
+
+  void _reset() {
+    setState(() {
+      _numTaps = 0;
+      _waterConsumed = 0;
+    });
+    waterBox.put('water', _waterConsumed);
+  }
+
+  void _submit() {
+    print('Submit button pressed!');
   }
 
   @override
@@ -106,37 +102,46 @@ class _WaterConsumptionTrackerState extends State<WaterConsumptionTracker> {
             SizedBox(height: 20),
             Text(
               '${_waterConsumed.toStringAsFixed(1)} cups',
-              style: TextStyle(fontSize: 40),
+              style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: _incrementWaterConsumption,
-                  child: Text('Add 0.25 cups'),
+            GestureDetector(
+              onTap: _onTap,
+              child: Container(
+                width: 150,
+                height: 150,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.blue,
                 ),
-                SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: _resetWaterConsumption,
-                  child: Text('Reset'),
+                child: Center(
+                  child: Text(
+                    '+',
+                    style: TextStyle(
+                        fontSize: 50, fontWeight: FontWeight.bold),
+                  ),
                 ),
-              ],
+              ),
             ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: BottomAppBar(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            IconButton(
-              icon: Icon(Icons.info_outline),
-              onPressed: () => _showSnackbar('This app was created by Sage.'),
+            SizedBox(height: 20),
+            RaisedButton(
+              onPressed: _reset,
+              child: Text('Reset'),
+            ),
+            SizedBox(height: 20),
+            RaisedButton(
+              onPressed: _submit,
+              child: Text('Submit'),
             ),
           ],
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    Hive.close();
+    super.dispose();
   }
 }

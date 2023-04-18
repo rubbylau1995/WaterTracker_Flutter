@@ -1,5 +1,5 @@
-
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(MyApp());
@@ -20,25 +20,59 @@ class MyApp extends StatelessWidget {
 
 class WaterConsumptionTracker extends StatefulWidget {
   @override
-  _WaterConsumptionTrackerState createState() => _WaterConsumptionTrackerState();
+  _WaterConsumptionTrackerState createState() =>
+      _WaterConsumptionTrackerState();
 }
 
 class _WaterConsumptionTrackerState extends State<WaterConsumptionTracker> {
-  int _numTaps = 0;
-  double _waterConsumed = 0;
+  double _waterConsumed = 0; // get from shared_pre and will save to shared_pre
+  double _newWaterConsumed = 0; // updated by user
 
-  void _onTap() {
+  void _incrementWaterConsumption() {
     setState(() {
-      _numTaps++;
-      _waterConsumed = _numTaps * 0.5;
+      _newWaterConsumed += 0.25;
+    });
+    // _showSnackbar('Water consumption saved.');
+  }
+
+  void _resetWaterConsumption() {
+    setState(() {
+      // _waterConsumed = 0;
+      _newWaterConsumed = 0;
+    });
+    // _showSnackbar('Water consumption saved.');
+  }
+
+  void _saveWaterConsumption() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('waterConsumed', _newWaterConsumed);
+    setState(() {
+      _waterConsumed = _newWaterConsumed;
+    });
+    _showSnackbar('Water consumption saved.');
+  }
+
+  void _loadWaterConsumption() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _waterConsumed = prefs.getDouble('waterConsumed') ?? 0;
+      _newWaterConsumed = _waterConsumed;
     });
   }
 
-  void _reset() {
-    setState(() {
-      _numTaps = 0;
-      _waterConsumed = 0;
-    });
+  void _showSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: Duration(seconds: 1),
+      ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWaterConsumption();
   }
 
   @override
@@ -52,10 +86,15 @@ class _WaterConsumptionTrackerState extends State<WaterConsumptionTracker> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Text(
+              'Already consumed: ${_waterConsumed.toStringAsFixed(2)} cups',
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 10),
+            Text(
               'Cups of water consumed today:',
               style: TextStyle(fontSize: 20),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 10), // 距離
             Stack(
               children: [
                 Container(
@@ -67,7 +106,7 @@ class _WaterConsumptionTrackerState extends State<WaterConsumptionTracker> {
                   ),
                 ),
                 Container(
-                  width: 300 * _waterConsumed / 2,
+                  width: 300 * _newWaterConsumed / 2,
                   height: 30,
                   decoration: BoxDecoration(
                     color: Colors.blue,
@@ -78,31 +117,28 @@ class _WaterConsumptionTrackerState extends State<WaterConsumptionTracker> {
             ),
             SizedBox(height: 20),
             Text(
-              '${_waterConsumed.toStringAsFixed(1)} cups',
-              style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+              '${_newWaterConsumed.toStringAsFixed(2)} cups',
+              style: TextStyle(fontSize: 24),
             ),
             SizedBox(height: 20),
-            GestureDetector(
-              onTap: _onTap,
-              child: Container(
-                width: 150,
-                height: 150,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.blue,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: _incrementWaterConsumption,
+                  child: Text('Add 0.5 cups'),
                 ),
-                child: Center(
-                  child: Text(
-                    '+',
-                    style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold),
-                  ),
+                SizedBox(width: 20),
+                ElevatedButton(
+                  onPressed: _resetWaterConsumption,
+                  child: Text('Reset'),
                 ),
-              ),
+              ],
             ),
             SizedBox(height: 20),
-            RaisedButton(
-              onPressed: _reset,
-              child: Text('Reset'),
+            ElevatedButton(
+              onPressed: _saveWaterConsumption,
+              child: Text('Save'),
             ),
           ],
         ),
@@ -110,3 +146,5 @@ class _WaterConsumptionTrackerState extends State<WaterConsumptionTracker> {
     );
   }
 }
+
+//In this version, the `_newWaterConsumed` variable is used to store the updated water consumption value, and the `Save` button calls the `_saveWaterConsumption` method to save the updated value to `SharedPreferences`. The `_incrementWaterConsumption` method updates only the `_newWaterConsumed` variable and does not save the value immediately. The `Add 0.25 cups` button and the `Reset` button also updates only the `_newWaterConsumed` variable.
