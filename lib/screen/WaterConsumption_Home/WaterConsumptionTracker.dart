@@ -14,6 +14,7 @@ class _WaterConsumptionTrackerState extends State<WaterConsumptionTracker> {
   double _maxInputWaterConsumed = 8;
   double _waterIncreaseSize = 0.5;
   double _standardWaterIntake = 8;
+  final List<int> _waterOptions = [1,2,3,4,5,6,7,8,9,];
 
   void _incrementWaterConsumption() {
     setState(() {
@@ -67,97 +68,117 @@ class _WaterConsumptionTrackerState extends State<WaterConsumptionTracker> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Water Tracker'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'Today consumed: ${_waterConsumed.toStringAsFixed(2)} cups',
-              style: TextStyle(fontSize: 16),
-            ),
-            SizedBox(height: 10),
-            Text(
-              'Cups of water consumed today:',
-              style: TextStyle(fontSize: 20),
-            ),
-            SizedBox(height: 10), // 距離
-            Stack(
-              children: [
-                Container(
-                  width: 300,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(15),
-                  ),
+    return
+        // Scaffold(
+        //   appBar: AppBar(
+        //     title: Text('Water Tracker'),
+        //   ),
+        // body: Center(
+        Container(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            'Today consumed: ${_waterConsumed.toStringAsFixed(2)} cups',
+            style: TextStyle(fontSize: 16),
+          ),
+          SizedBox(height: 10),
+          Text(
+            'Cups of water consumed today:',
+            style: TextStyle(fontSize: 20),
+          ),
+          SizedBox(height: 10), // 距離
+          Stack(
+            children: [
+              Container(
+                width: 300,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(15),
                 ),
-                Container(
-                  width: 300 * _waterConsumed / _standardWaterIntake,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    color: Colors.blue,
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 20),
-            Text(
-              '${_newWaterConsumed.toStringAsFixed(2)} cups',
-              style: TextStyle(fontSize: 24),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _incrementWaterConsumption,
-              child: Icon(
-                Icons.add,
-                color: Colors.white,
               ),
-              style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(
-                      50), // half of the width (100) or height (100) of the button
+              Container(
+                width: 300 * _waterConsumed / _standardWaterIntake,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  borderRadius: BorderRadius.circular(15),
                 ),
-                padding: EdgeInsets.all(
-                    20), // adjust the padding to make the button bigger or smaller
-                elevation: 5,
               ),
+            ],
+          ),
+          SizedBox(height: 20),
+          Text(
+            '${_newWaterConsumed.toStringAsFixed(2)} cups',
+            style: TextStyle(fontSize: 24),
+          ),
+          SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: _incrementWaterConsumption,
+            child: Icon(
+              Icons.add,
+              color: Colors.white,
             ),
-            SizedBox(height: 20),
-             Slider(
-              value: _newWaterConsumed,
-              min: 0,
-              max: _maxInputWaterConsumed,
-              divisions: _maxInputWaterConsumed.toInt(),
-              label: '${_newWaterConsumed.toStringAsFixed(2)} cups',
-              onChanged: (double value) {
-                setState(() {
-                  _newWaterConsumed = value;
-                });
-              },
+            style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(
+                    50), // half of the width (100) or height (100) of the button
+              ),
+              padding: EdgeInsets.all(
+                  20), // adjust the padding to make the button bigger or smaller
+              elevation: 5,
             ),
-            SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: _resetWaterConsumption,
-                  child: Text('Reset'),
-                ),
-                SizedBox(width: 20),
-                ElevatedButton(
-                  onPressed: _saveWaterConsumption,
-                  child: Text('Save'),
-                ),
-              ],
-            ),
-          ],
-        ),
+          ),
+          SizedBox(height: 20),
+          //  Slider(
+          //   value: _newWaterConsumed,
+          //   min: 0,
+          //   max: _maxInputWaterConsumed,
+          //   divisions: _maxInputWaterConsumed.toInt(),
+          //   label: '${_newWaterConsumed.toStringAsFixed(2)} cups',
+          //   onChanged: (double value) {
+          //     setState(() {
+          //       _newWaterConsumed = value;
+          //     });
+          //   },
+          // ),
+
+          DropdownButton<int>(
+            value: null,
+            hint: Text('Select amount of water drank'),
+            onChanged: (int? newValue) {
+              setState(() {
+                _newWaterConsumed = newValue?.toDouble() ?? 0;
+              });
+            },
+            items: _waterOptions.map((int value) {
+              return DropdownMenuItem<int>(
+                value: value,
+                child: Text('$value'),
+              );
+            }).toList(),
+          ),
+
+          SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton(
+                onPressed: _resetWaterConsumption,
+                child: Text('Reset'),
+              ),
+              SizedBox(width: 20),
+              ElevatedButton(
+                onPressed: _saveWaterConsumption,
+                child: Text('Save'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
+    //   ),
+    // );
   }
 }
