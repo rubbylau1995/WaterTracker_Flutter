@@ -1,6 +1,10 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
+import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:intl/intl.dart'; // Import the Intl package for date formatting
+import 'package:intl/intl.dart';
+import 'package:water/constant.dart'; // Import the Intl package for date formatting
 
 class WaterConsumptionTracker extends StatefulWidget {
   @override
@@ -14,7 +18,24 @@ class _WaterConsumptionTrackerState extends State<WaterConsumptionTracker> {
   double _maxInputWaterConsumed = 8;
   double _waterIncreaseSize = 0.5;
   double _standardWaterIntake = 8;
-  final List<int> _waterOptions = [1,2,3,4,5,6,7,8,9,];
+  int _targetWaterConsumed = 8;
+  double _percentOfTargetAchived = 0;
+  String _waterUnit = "C";
+
+  String key = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+  final List<String> _waterUnitOpt = ['cups', 'ml', 'L'];
+  final List<int> _waterOpt = [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+  ];
 
   void _incrementWaterConsumption() {
     setState(() {
@@ -33,21 +54,24 @@ class _WaterConsumptionTrackerState extends State<WaterConsumptionTracker> {
 
   void _saveWaterConsumption() async {
     final prefs = await SharedPreferences.getInstance();
-    String key = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    await prefs.setDouble(key, _newWaterConsumed);
-
+    
+    await prefs.setDouble(key, _newWaterConsumed + _waterConsumed);
+   
     setState(() {
       _waterConsumed = _newWaterConsumed + _waterConsumed;
       _newWaterConsumed = 0;
+      _percentOfTargetAchived = _waterConsumed / _targetWaterConsumed > 1.0 ? 1.0 : _waterConsumed / _targetWaterConsumed;
     });
+   
     _showSnackbar('Water consumption saved.');
   }
 
   void _loadWaterConsumption() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _waterConsumed = prefs.getDouble('waterConsumed') ?? 0;
-      _newWaterConsumed = _waterConsumed;
+      _waterConsumed = prefs.getDouble(key) ?? 0;
+      // _newWaterConsumed = _waterConsumed;
+      _percentOfTargetAchived = _waterConsumed / _targetWaterConsumed > 1.0 ? 1.0 : _waterConsumed / _targetWaterConsumed;
     });
   }
 
@@ -69,51 +93,128 @@ class _WaterConsumptionTrackerState extends State<WaterConsumptionTracker> {
   @override
   Widget build(BuildContext context) {
     return
-        // Scaffold(
-        //   appBar: AppBar(
-        //     title: Text('Water Tracker'),
-        //   ),
-        // body: Center(
-        Container(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Text(
-            'Today consumed: ${_waterConsumed.toStringAsFixed(2)} cups',
-            style: TextStyle(fontSize: 16),
+        SingleChildScrollView(
+      child: Column(children: <Widget>[
+          WaterConsumption(),
+      ]),
+    );
+  }
+
+  Container WaterConsumption() {
+    return Container(
+       margin: EdgeInsets.only(
+        left: kDefaultPadding,
+        top: kDefaultPadding * 2,
+        bottom: kDefaultPadding * 2.5,
+      ),
+      //       // padding: EdgeInsets.only(
+
+      //       //     top: kDefaultPadding * 2,
+      //       //    ),
+      // child: Column(
+      //   // mainAxisAlignment: MainAxisAlignment.center,
+      //   children: <Widget>[
+       
+      //     SizedBox(height: 10),
+      //     Text(
+      //       'Cups of water consumed today:',
+      //       style: TextStyle(fontSize: 20),
+      //     ),
+      //     SizedBox(height: 15), // 距離
+      //     CircularPercentIndicator(
+      //       radius: 100.0,
+      //       lineWidth: 10.0,
+      //       percent: _waterConsumed / _targetWaterConsumed ,
+      //       center: Text('${(_waterConsumed / _targetWaterConsumed * 100).toStringAsFixed(1)}'),
+      //       progressColor: kPrimaryColor,
+      //     ),
+
+
+
+  alignment: Alignment.center,
+  child: Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: <Widget>[
+      Text(
+        'Cups of water consumed today:',
+        style: TextStyle(fontSize: 20),
+      ),
+      SizedBox(height: 30),
+      GestureDetector(
+         onTap: () {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Set Target Water Consumption',
+          style: Theme.of(context).textTheme.bodyMedium,),
+          content: TextField( // why onChanged
+            keyboardType: TextInputType.number,
+            onChanged: (value) {
+              //  setState(() {
+              //         _targetWaterConsumed = double.parse(newValue?.toString() ?? '0'),
+              //       });
+              setState(() {
+            _targetWaterConsumed = int.parse(value);
+            });
+            },
           ),
-          SizedBox(height: 10),
-          Text(
-            'Cups of water consumed today:',
-            style: TextStyle(fontSize: 20),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            FlatButton(
+              child: Text('OK'),
+              onPressed: () {
+                // Save the target water consumption here
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  },
+        child: Center(
+          child: CircularPercentIndicator(
+            radius: 200.0,
+            backgroundWidth: 25,
+            lineWidth: 15.0,
+            percent: _percentOfTargetAchived ,
+            center: Text('$_waterConsumed cups' ,style: TextStyle(fontSize: 18)),         
+            progressColor: kPrimaryColor,
           ),
-          SizedBox(height: 10), // 距離
-          Stack(
-            children: [
-              Container(
-                width: 300,
-                height: 30,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-              Container(
-                width: 300 * _waterConsumed / _standardWaterIntake,
-                height: 30,
-                decoration: BoxDecoration(
-                  color: Colors.blue,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 20),
+        ),
+      ),
+          // Stack( // progress bar
+          //   children: [
+          //     Container(
+          //       width: 300,
+          //       height: 30,
+          //       decoration: BoxDecoration(
+          //         color: Colors.grey[300],
+          //         borderRadius: BorderRadius.circular(15),
+          //       ),
+          //     ),
+          //     Container(
+          //       width: 300 * _waterConsumed / _standardWaterIntake,
+          //       height: 30,
+          //       decoration: BoxDecoration(
+          //         color: Colors.blue,
+          //         borderRadius: BorderRadius.circular(15),
+          //       ),
+          //     ),
+          //   ],
+          // ),
+          SizedBox(height: 50),
           Text(
-            '${_newWaterConsumed.toStringAsFixed(2)} cups',
+            '${_newWaterConsumed.toStringAsFixed(1)} cups',
             style: TextStyle(fontSize: 24),
           ),
-          SizedBox(height: 20),
+          SizedBox(height: 50),
           ElevatedButton(
             onPressed: _incrementWaterConsumption,
             child: Icon(
@@ -152,7 +253,7 @@ class _WaterConsumptionTrackerState extends State<WaterConsumptionTracker> {
                 _newWaterConsumed = newValue?.toDouble() ?? 0;
               });
             },
-            items: _waterOptions.map((int value) {
+            items: _waterOpt.map((int value) {
               return DropdownMenuItem<int>(
                 value: value,
                 child: Text('$value'),
@@ -178,7 +279,5 @@ class _WaterConsumptionTrackerState extends State<WaterConsumptionTracker> {
         ],
       ),
     );
-    //   ),
-    // );
   }
 }
